@@ -115,6 +115,13 @@ PokecenterNurseScript:
 	farwritetext NurseTakePokemonText
 	waitbutton
 	closetext
+	faceobject PLAYER, FOLLOWER
+	pause 10
+	faceobject FOLLOWER, PLAYER
+	pause 10
+	stowfollower
+	pause 10
+	turnobject PLAYER, UP
 	sjump .ok
 .no_heal
 	closetext
@@ -132,7 +139,7 @@ PokecenterNurseScript:
 	special RestartMapMusic
 	turnobject LAST_TALKED, DOWN
 	pause 10
-
+	opentext
 	checkphonecall ; elm already called about pokerus
 	iftrue .no
 	checkflag ENGINE_CAUGHT_POKERUS
@@ -156,6 +163,11 @@ PokecenterNurseScript:
 	turnobject LAST_TALKED, DOWN
 	pause 10
 	turnobject PLAYER, DOWN
+	faceobject PLAYER, FOLLOWER
+	faceobject FOLLOWER, PLAYER
+	pause 10
+	savefollowercoords
+	appearfollower
 	end
 
 .NurseReturnPokemonText

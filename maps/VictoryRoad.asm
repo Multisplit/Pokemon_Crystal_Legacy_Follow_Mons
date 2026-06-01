@@ -21,6 +21,7 @@ VictoryRoad_MapScripts:
 	end
 
 VictoryRoadRivalLeft:
+	applymovement FOLLOWER, VictoryRoadFollowerMovement1
 	moveobject VICTORYROAD_SILVER, 18, 11
 	turnobject PLAYER, DOWN
 	showemote EMOTE_SHOCK, PLAYER, 15
@@ -127,6 +128,18 @@ VictoryRoadHiddenMaxPotion:
 
 VictoryRoadHiddenFullHeal:
 	hiddenitem FULL_HEAL, EVENT_VICTORY_ROAD_HIDDEN_FULL_HEAL
+
+VictoryRoadFollowerMovement1:
+	step RIGHT
+	step UP
+	turn_head DOWN
+	step_end
+
+VictoryRoadFollowerMovement2:
+	step LEFT
+	step UP
+	turn_head DOWN
+	step_end
 
 VictoryRoadRivalBattleApproachMovement1:
 	step LEFT

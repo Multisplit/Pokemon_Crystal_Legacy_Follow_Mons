@@ -142,8 +142,11 @@ SpriteAnimOAMData:
 	dbw $08, .OAMData_GameFreakLogo4_11        ; SPRITE_ANIM_OAMSET_GAMEFREAK_LOGO_9
 	dbw $04, .OAMData_GameFreakLogo4_11        ; SPRITE_ANIM_OAMSET_GAMEFREAK_LOGO_10
 	dbw $00, .OAMData_GameFreakLogo4_11        ; SPRITE_ANIM_OAMSET_GAMEFREAK_LOGO_11
-	dbw $00, .OAMData_PartyMon                 ; SPRITE_ANIM_OAMSET_PARTY_MON_1
-	dbw $04, .OAMData_PartyMon                 ; SPRITE_ANIM_OAMSET_PARTY_MON_2
+	dbw $00, .OAMData_PartyMonWithMail3        ; SPRITE_ANIM_OAMSET_PARTY_MON_WITH_MAIL_3
+	dbw $00, .OAMData_PartyMonWithItem3        ; SPRITE_ANIM_OAMSET_PARTY_MON_WITH_ITEM_3
+	dbw $00, .OAMData_PartyMon1                ; SPRITE_ANIM_OAMSET_PARTY_MON_1
+	dbw $00, .OAMData_PartyMon2                ; SPRITE_ANIM_OAMSET_PARTY_MON_2
+	dbw $00, .OAMData_PartyMon3                ; SPRITE_ANIM_OAMSET_PARTY_MON_3
 	assert_table_length NUM_SPRITE_ANIM_OAMSETS
 
 .OAMData_1x1_Palette0:
@@ -366,28 +369,28 @@ SpriteAnimOAMData:
 	db 4
 	dbsprite -1, -1,  0,  0, $00, -1
 	dbsprite  0, -1,  0,  0, $01, -1
-	dbsprite -1,  0,  0,  0, $08, PAL_ICON_RED
+	dbsprite -1,  0,  0,  0, $08, PAL_MON_RED
 	dbsprite  0,  0,  0,  0, $03, -1
 
 .OAMData_PartyMonWithMail2:
 	db 4
 	dbsprite -1, -1,  0,  0, $04, -1
 	dbsprite  0, -1,  0,  0, $05, -1
-	dbsprite -1,  0,  0,  0, $08, PAL_ICON_RED
+	dbsprite -1,  0,  0,  0, $08, PAL_MON_RED
 	dbsprite  0,  0,  0,  0, $07, -1
 
 .OAMData_PartyMonWithItem1:
 	db 4
 	dbsprite -1, -1,  0,  0, $00, -1
 	dbsprite  0, -1,  0,  0, $01, -1
-	dbsprite -1,  0,  0,  0, $09, PAL_ICON_RED
+	dbsprite -1,  0,  0,  0, $09, PAL_MON_RED
 	dbsprite  0,  0,  0,  0, $03, -1
 
 .OAMData_PartyMonWithItem2:
 	db 4
 	dbsprite -1, -1,  0,  0, $04, -1
 	dbsprite  0, -1,  0,  0, $05, -1
-	dbsprite -1,  0,  0,  0, $09, PAL_ICON_RED
+	dbsprite -1,  0,  0,  0, $09, PAL_MON_RED
 	dbsprite  0,  0,  0,  0, $07, -1
 
 .OAMData_PartyMon:
@@ -1137,3 +1140,39 @@ SpriteAnimOAMData:
 	dbsprite -1,  0,  4,  0, $51, 1
 	dbsprite  0,  0,  4,  0, $52, 1
 	dbsprite  1,  0,  4,  0, $53, 1
+
+.OAMData_PartyMonWithMail3:
+	db 4
+	dbsprite -1, -1,  0,  0, $05, -2
+	dbsprite  0, -1,  0,  0, $04, -2
+	dbsprite -1,  0,  0,  0, $08, PAL_OW_RED
+	dbsprite  0,  0,  0,  0, $06, -2
+
+.OAMData_PartyMonWithItem3:
+	db 4
+	dbsprite -1, -1,  0,  0, $05, -2
+	dbsprite  0, -1,  0,  0, $04, -2
+	dbsprite -1,  0,  0,  0, $09, PAL_OW_RED
+	dbsprite  0,  0,  0,  0, $06, -2
+
+.OAMData_PartyMon1:
+	db 4
+	dbsprite -1, -1,  0,  0, $00, -1
+	dbsprite  0, -1,  0,  0, $01, -1
+	dbsprite -1,  0,  0,  0, $02, -1
+	dbsprite  0,  0,  0,  0, $03, -1
+
+.OAMData_PartyMon2:
+	db 4
+	dbsprite -1, -1,  0,  0, $04, -1
+	dbsprite  0, -1,  0,  0, $05, -1
+	dbsprite -1,  0,  0,  0, $06, -1
+	dbsprite  0,  0,  0,  0, $07, -1
+
+
+.OAMData_PartyMon3:
+	db 4
+	dbsprite -1, -1,  0,  0, $05, -2
+	dbsprite  0, -1,  0,  0, $04, -2
+	dbsprite -1,  0,  0,  0, $07, -2
+	dbsprite  0,  0,  0,  0, $06, -2

@@ -7,7 +7,7 @@ CanObjectMoveInDirection:
 	ld hl, OBJECT_FLAGS1
 	add hl, bc
 	bit NOCLIP_TILES_F, [hl]
-	jr nz, .noclip_tiles
+	; jr nz, .noclip_tiles
 	push hl
 	push bc
 	call WillObjectBumpIntoLand
@@ -270,6 +270,15 @@ WillObjectBumpIntoSomeoneElse:
 	add hl, bc
 	ld d, [hl]
 	ld hl, OBJECT_NEXT_MAP_Y
+	add hl, bc
+	ld e, [hl]
+	jr IsNPCAtCoord
+
+IsObjectStandingOnSomeoneElse:
+	ld hl, OBJECT_MAP_X
+	add hl, bc
+	ld d, [hl]
+	ld hl, OBJECT_MAP_Y
 	add hl, bc
 	ld e, [hl]
 	jr IsNPCAtCoord

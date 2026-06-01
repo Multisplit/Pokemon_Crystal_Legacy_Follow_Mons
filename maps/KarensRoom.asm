@@ -92,6 +92,7 @@ KarensRoom_EnterMovement:
 	step UP
 	step UP
 	step UP
+	step UP
 	step_end
 
 KarenScript_KarenRematchBeforeText:

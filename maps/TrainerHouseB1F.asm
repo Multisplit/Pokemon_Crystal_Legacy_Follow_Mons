@@ -71,6 +71,7 @@ TrainerHouseReceptionistScript:
 	waitbutton
 	closetext
 	applymovement PLAYER, Movement_EnterTrainerHouseBattleRoom
+	turnobject FOLLOWER, DOWN
 	special TrainerHouse
 	iffalse .NoSpecialBattle
 	opentext
@@ -157,8 +158,8 @@ Movement_EnterTrainerHouseBattleRoom:
 	step DOWN
 	step DOWN
 	step DOWN
-	step DOWN
 	step LEFT
+	step DOWN
 	turn_head RIGHT
 	step_end
 

@@ -61,6 +61,12 @@ text_asm: MACRO
 	db TX_START_ASM
 ENDM
 
+MACRO text_endasm
+	ld hl, ._\@
+	ret
+._\@
+ENDM
+
 	const TX_DECIMAL ; $09
 text_decimal: MACRO
 	db TX_DECIMAL

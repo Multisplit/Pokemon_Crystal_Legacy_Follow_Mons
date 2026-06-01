@@ -1,5 +1,6 @@
 ; object constants
 PLAYER      EQU  0
+FOLLOWER    EQU  1
 LAST_TALKED EQU -2
 
 ; string buffer constants
@@ -72,7 +73,8 @@ STRING_BUFFER_LENGTH EQU 19
 	const VAR_BLUECARDBALANCE  ; 18
 	const VAR_BUENASPASSWORD   ; 19
 	const VAR_KENJI_BREAK      ; 1a
-NUM_VARS EQU const_value           ; 1b
+        const VAR_FOLLOWERSTATE    ; 1b
+NUM_VARS EQU const_value
 
 ; variable action types
 RETVAR_STRBUF2 EQU 0 << 6
@@ -195,6 +197,7 @@ NUM_FLOORS EQU const_value
 	const EMOTE_ROD
 	const EMOTE_BOULDER_DUST
 	const EMOTE_GRASS_RUSTLE
+	const EMOTE_POKE_BALL
 NUM_EMOTES EQU const_value
 EMOTE_FROM_MEM EQU -1
 EMOTE_LENGTH EQU 6

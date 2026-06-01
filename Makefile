@@ -21,6 +21,7 @@ rom_obj := \
 	gfx/misc.o \
 	gfx/pics.o \
 	gfx/sprites.o \
+	gfx/following_sprites.o \
 	gfx/tilesets.o \
 	lib/mobile/main.o
 
@@ -103,7 +104,7 @@ tools:
 	$(MAKE) -C tools/
 
 
-RGBASMFLAGS = -L -Weverything -Wnumeric-string=2 -Wtruncation=1
+RGBASMFLAGS += -Weverything -Wnumeric-string=2 -Wtruncation=1
 # Create a sym/map for debug purposes if `make` run with `DEBUG=1`
 ifeq ($(DEBUG),1)
 RGBASMFLAGS += -E

@@ -37,21 +37,6 @@ _ClearSprites: ; mobile
 	ld [wSpriteFlags], a
 	ret
 
-RefreshSprites::
-	call .Refresh
-	call LoadUsedSpritesGFX
-	ret
-
-.Refresh:
-	xor a
-	ld bc, wUsedSpritesEnd - wUsedSprites
-	ld hl, wUsedSprites
-	call ByteFill
-	call GetPlayerSprite
-	call AddMapSprites
-	call LoadAndSortSprites
-	ret
-
 GetPlayerSprite:
 ; Get Chris or Kris's sprite.
 	ld hl, ChrisStateSprites
@@ -91,49 +76,55 @@ GetPlayerSprite:
 
 INCLUDE "data/sprites/player_sprites.asm"
 
-AddMapSprites:
-	call GetMapEnvironment
-	call CheckOutdoorMap
-	jr z, .outdoor
-	call AddIndoorSprites
+RefreshSprites::
+	push hl
+	push de
+	push bc
+	call GetPlayerSprite
+	xor a
+	ld [hUsedSpriteIndex], a
+	call ReloadSpriteIndex
+	call LoadMiscTiles
+	pop bc
+	pop de
+	pop hl
 	ret
 
-.outdoor
-	call AddOutdoorSprites
-	ret
-
-AddIndoorSprites:
-	ld hl, wMap1ObjectSprite
-	ld a, 1
+ReloadSpriteIndex::
+; Reloads sprites using hUsedSpriteIndex.
+; Used to reload variable sprites
+	ld hl, wObjectStructs
+	ld de, OBJECT_LENGTH
+	push bc
+	ld a, [hUsedSpriteIndex]
+	ld b, a
+	xor a
 .loop
-	push af
+	ld [hObjectStructIndex], a
 	ld a, [hl]
-	call AddSpriteGFX
-	ld de, MAPOBJECT_LENGTH
-	add hl, de
-	pop af
-	inc a
-	cp NUM_OBJECTS
-	jr nz, .loop
-	ret
-
-AddOutdoorSprites:
-	ld a, [wMapGroup]
-	dec a
-	ld c, a
-	ld b, 0
-	ld hl, OutdoorSprites
-	add hl, bc
-	add hl, bc
-	ld a, [hli]
-	ld h, [hl]
-	ld l, a
-.loop
-	ld a, [hli]
 	and a
-	ret z
-	call AddSpriteGFX
-	jr .loop
+	jr z, .done
+	bit 7, b
+	jr z, .continue
+	cp b
+	jr nz, .done
+.continue
+	push hl
+	call GetSpriteVTile
+	pop hl
+	push hl
+	inc hl
+	inc hl
+	ld [hl], a
+	pop hl
+.done
+	add hl, de
+	ld a, [hObjectStructIndex]
+	inc a
+	cp NUM_OBJECT_STRUCTS
+	jr nz, .loop
+	pop bc
+	ret
 
 LoadUsedSpritesGFX:
 	ld a, MAPCALLBACK_SPRITES
@@ -146,6 +137,9 @@ LoadMiscTiles:
 	ld a, [wSpriteFlags]
 	bit 6, a
 	ret nz
+
+	ld c, EMOTE_POKE_BALL
+	farcall LoadEmote
 
 	ld c, EMOTE_SHADOW
 	farcall LoadEmote
@@ -164,7 +158,9 @@ SafeGetSprite:
 	pop hl
 	ret
 
-GetSprite:
+GetSprite::
+	call GetFollowingSprite
+	ret c
 	call GetMonSprite
 	ret c
 
@@ -202,39 +198,28 @@ GetMonSprite:
 	jr z, .BreedMon2
 	cp SPRITE_VARS
 	jr nc, .Variable
-	jr .Icon
+	jr .pokemon_sprite
 
 .Normal:
 	and a
 	ret
 
-.Icon:
+.pokemon_sprite:
 	sub SPRITE_POKEMON
 	ld e, a
 	ld d, 0
 	ld hl, SpriteMons
 	add hl, de
 	ld a, [hl]
-	jr .Mon
+	jp GetWalkingMonSprite
 
 .BreedMon1
 	ld a, [wBreedMon1Species]
-	jr .Mon
+	jp GetWalkingMonSprite
 
 .BreedMon2
 	ld a, [wBreedMon2Species]
-
-.Mon:
-	ld e, a
-	and a
-	jr z, .NoBreedmon
-
-	farcall LoadOverworldMonIcon
-
-	ld l, WALKING_SPRITE
-	ld h, 0
-	scf
-	ret
+	jp GetWalkingMonSprite
 
 .Variable:
 	sub SPRITE_VARS
@@ -246,16 +231,114 @@ GetMonSprite:
 	and a
 	jp nz, GetMonSprite
 
-.NoBreedmon:
-	ld a, WALKING_SPRITE
-	ld l, WALKING_SPRITE
+GetFirstAliveMon::
+; Returns [wParty#Sprite] in a; party number in d
+	ld a, [wPartyCount]
+	and a
+	ret z
+	inc a
+	ld d, 1
+	ld e, a
+	ld bc, wPartyMon1
+.loop
+	ld hl, MON_HP
+	add hl, bc
+	ld a, [hli]
+	push de
+	ld d, a
+	ld a, [hl]
+	or d
+	pop de
+	jr nz, .got_mon_struct
+	inc d
+	ld a, d
+	cp e
+	ret z
+	ld hl, PARTYMON_STRUCT_LENGTH
+	add hl, bc
+	ld b, h
+	ld c, l
+	jr .loop
+.got_mon_struct
+	ld a, [bc]
+	ret
+
+GetFollowingSprite:
+	cp SPRITE_FOLLOWER
+	jr nz, GetWalkingMonSprite.nope
+
+	call GetFirstAliveMon
+	ld [wFollowerSpriteID], a
+	push af
+	ld a, d
+	ld [wFollowerPartyNum], a
+	pop af
+
+GetWalkingMonSprite:
+	push af
+	dec a
+
+	ld hl, FollowingSpritePointers
+
+	cp (UNOWN - 1) ; we already decremented
+	jr nz, .not_unown
+	ld a, [wFollowerPartyNum]
+	ld bc, PARTYMON_STRUCT_LENGTH
+	ld hl, wPartyMon1DVs
+	call AddNTimes
+	predef GetUnownLetter
+	ld a, [wUnownLetter]
+	dec a
+	ld hl, UnownFollowingSpritePointers
+
+.not_unown
+	ld d, 0
+	ld e, a
+	add hl, de
+	add hl, de
+	add hl, de
+	assert BANK(FollowingSpritePointers) == BANK(UnownFollowingSpritePointers), \
+			"FollowingSpritePointers Bank is not equal to UnownFollowingSpritePointers"
+	ld a, BANK(FollowingSpritePointers)
+	push af
+	call GetFarByte
+	ld b, a
+	inc hl
+	pop af
+	call GetFarWord
+
+	ldh a, [rSVBK]
+	push af
+	ld a, BANK(wDecompressScratch)
+	ldh [rSVBK], a
+
+	push bc
+	ld a, b
+	ld de, wDecompressScratch
+	call FarDecompress
+	pop bc
+	ld de, wDecompressScratch
+
+	pop af
+	ldh [rSVBK], a
+
 	ld h, 0
+	ld c, 12
+	ld l, WALKING_SPRITE
+
+	pop af
+
+	scf
+	ret
+.nope
 	and a
 	ret
 
 _DoesSpriteHaveFacings::
 ; Checks to see whether we can apply a facing to a sprite.
 ; Returns carry unless the sprite is a Pokemon or a Still Sprite.
+	cp SPRITE_FOLLOWER
+	jr z, .follower
 	cp SPRITE_POKEMON
 	jr nc, .only_down
 
@@ -275,11 +358,19 @@ _DoesSpriteHaveFacings::
 	scf
 	ret
 
+.follower
+	ld a, WALKING_SPRITE
+
 .only_down
 	and a
 	ret
 
 _GetSpritePalette::
+	ld a, c
+	push bc
+	call GetFollowingSprite
+	pop bc
+	jr c, .follower
 	ld a, c
 	call GetMonSprite
 	jr c, .is_pokemon
@@ -298,9 +389,36 @@ _GetSpritePalette::
 	ld c, a
 	ret
 
-LoadAndSortSprites:
-	call LoadSpriteGFX
-	call ArrangeUsedSprites
+.follower
+	dec a
+	ld hl, MenuMonPals
+	ld b, 0
+	ld c, a
+	add hl, bc
+	ld a, BANK(MenuMonPals)
+	call GetFarByte
+	push de
+	ld d, a
+	ld a, [wFollowerPartyNum]
+	dec a
+	ld hl, wPartyMon1DVs
+	call GetPartyLocation
+	ld b, h
+	ld c, l
+	farcall CheckShininess
+	ld a, d
+	pop de
+	jr c, .shiny
+	swap a
+.shiny
+	and $f
+	ld hl, FollowingPalLookupTable
+	ld b, 0
+	ld c, a
+	add hl, bc
+	ld a, BANK(FollowingPalLookupTable)
+	call GetFarByte
+	ld c, a
 	ret
 
 AddSpriteGFX:
@@ -339,88 +457,6 @@ AddSpriteGFX:
 	pop bc
 	pop hl
 	and a
-	ret
-
-LoadSpriteGFX:
-	ld hl, wUsedSprites
-	ld b, SPRITE_GFX_LIST_CAPACITY
-.loop
-	ld a, [hli]
-	and a
-	jr z, .done
-	push hl
-	call .LoadSprite
-	pop hl
-	ld [hli], a
-	dec b
-	jr nz, .loop
-
-.done
-	ret
-
-.LoadSprite:
-	push bc
-	call GetSprite
-	pop bc
-	ld a, l
-	ret
-
-ArrangeUsedSprites:
-; Get the length of each sprite and space them out in VRAM.
-; Crystal introduces a second table in VRAM bank 0.
-
-	ld hl, wUsedSprites
-	ld c, SPRITE_GFX_LIST_CAPACITY
-	ld b, 0
-.FirstTableLength:
-; Keep going until the end of the list.
-	ld a, [hli]
-	and a
-	jr z, .quit
-
-	ld a, [hl]
-	call GetSpriteLength
-
-; Spill over into the second table after $80 tiles.
-	add b
-	cp $80
-	jr z, .loop
-	jr nc, .SecondTable
-
-.loop
-	ld [hl], b
-	inc hl
-	ld b, a
-
-; Assumes the next table will be reached before c hits 0.
-	dec c
-	jr nz, .FirstTableLength
-
-.SecondTable:
-; The second tile table starts at tile $80.
-	ld b, $80
-	dec hl
-.SecondTableLength:
-; Keep going until the end of the list.
-	ld a, [hli]
-	and a
-	jr z, .quit
-
-	ld a, [hl]
-	call GetSpriteLength
-
-; There are only two tables, so don't go any further than that.
-	add b
-	jr c, .quit
-
-	ld [hl], b
-	ld b, a
-	inc hl
-
-	dec c
-	jr nz, .SecondTableLength
-
-.quit
 	ret
 
 GetSpriteLength:
@@ -480,7 +516,7 @@ GetUsedSprites:
 .done
 	ret
 
-GetUsedSprite:
+GetUsedSprite::
 	ldh a, [hUsedSpriteIndex]
 	call SafeGetSprite
 	ldh a, [hUsedSpriteTile]
@@ -551,7 +587,17 @@ endr
 
 .bankswitch
 	ldh [rVBK], a
+
+	ldh a, [rSVBK]
+	push af
+	ld a, BANK(wDecompressScratch)
+	ldh [rSVBK], a
+
 	call Get2bpp
+
+	pop af
+	ldh [rSVBK], a
+
 	pop af
 	ldh [rVBK], a
 	ret
@@ -588,7 +634,5 @@ LoadEmote::
 INCLUDE "data/sprites/emotes.asm"
 
 INCLUDE "data/sprites/sprite_mons.asm"
-
-INCLUDE "data/maps/outdoor_sprites.asm"
 
 INCLUDE "data/sprites/sprites.asm"

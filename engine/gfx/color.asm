@@ -1307,9 +1307,9 @@ endr
 	jr z, .day_care_mon_2
 	ld [wCurPartySpecies], a
 
-	ld hl, wBreedMon1DVs ; HL now points to the params of the wBreedMon1, which is needed by GetMenuMonIconPalette to determine if it's shiny.
-	ld de, GetMenuMonIconPalette
-	ld a, BANK(GetMenuMonIconPalette)	
+	ld hl, wBreedMon1DVs ; HL now points to the params of the wBreedMon1, which is needed by GetMenuMonPalette to determine if it's shiny.
+	ld de, GetMenuMonPalette
+	ld a, BANK(GetMenuMonPalette)	
 	call FarCall_de
 	ld a, e
 	add a
@@ -1323,7 +1323,7 @@ endr
 	inc hl
 	inc hl
 
-	ld de, wOBPals1 palette PAL_OW_PINK + 2
+	ld de, wOBPals1 palette PAL_OW_PURPLE + 2
 	ld bc, 1 palettes - 2
 	ld a, BANK(wOBPals1)
 	call FarCopyWRAM
@@ -1336,9 +1336,9 @@ endr
 	ret z
 	ld [wCurPartySpecies], a
 
-	ld hl, wBreedMon2DVs ; HL now points to the params of the wBreedMon2, which is needed by GetMenuMonIconPalette to determine if it's shiny.
-	ld de, GetMenuMonIconPalette
-	ld a, BANK(GetMenuMonIconPalette)	
+	ld hl, wBreedMon2DVs ; HL now points to the params of the wBreedMon2, which is needed by GetMenuMonPalette to determine if it's shiny.
+	ld de, GetMenuMonPalette
+	ld a, BANK(GetMenuMonPalette)	
 	call FarCall_de
 	ld a, e
 	add a
@@ -1549,10 +1549,10 @@ SetFirstOBJPalette::
 	ld hl, PartyMenuOBPals
 	ld d, 0
 	add hl, de
- 	ld de, wOBPals1
+	ld de, wOBPals1
 	ld bc, 1 palettes
 	ld a, BANK(wOBPals1)
 	call FarCopyWRAM
 	ld a, TRUE
- 	ldh [hCGBPalUpdate], a
- 	jp ApplyPals
+	ldh [hCGBPalUpdate], a
+	jp ApplyPals

@@ -102,6 +102,7 @@ BrunosRoom_EnterMovement:
 	step UP
 	step UP
 	step UP
+	step UP
 	step_end
 
 BrunoScript_BrunoRematchBeforeText:

@@ -1065,4 +1065,49 @@ checksave: MACRO
 	db checksave_command
 ENDM
 
+	const freezefollower_command ; $aa
+freezefollower: MACRO
+	db freezefollower_command
+ENDM
+
+	const unfreezefollower_command ; $ab
+unfreezefollower: MACRO
+	db unfreezefollower_command
+ENDM
+
+	const getfollowerdirection_command ; $ac
+getfollowerdirection: MACRO
+	db getfollowerdirection_command
+ENDM
+
+	const followcry_command ; $ad
+followcry: MACRO
+	db followcry_command
+ENDM
+
+	const stowfollower_command ; $ae
+stowfollower: MACRO
+	db stowfollower_command
+ENDM
+
+	const appearfollower_command ; $af
+appearfollower: MACRO
+	db appearfollower_command
+ENDM
+
+	const appearfolloweronestep_command ; $b0
+appearfolloweronestep: MACRO
+	db appearfolloweronestep_command
+ENDM
+
+	const savefollowercoords_command ; $b1
+savefollowercoords: MACRO
+	db savefollowercoords_command
+ENDM
+
+	const silentstowfollower_command ; $b2
+silentstowfollower: MACRO
+	db silentstowfollower_command
+ENDM
+
 NUM_EVENT_COMMANDS EQU const_value

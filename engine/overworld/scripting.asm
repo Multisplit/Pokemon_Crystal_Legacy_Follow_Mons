@@ -234,6 +234,15 @@ ScriptCommandTable:
 	dw Script_getname                    ; a7
 	dw Script_wait                       ; a8
 	dw Script_checksave                  ; a9
+	dw Script_freezefollower             ; aa
+	dw Script_unfreezefollower           ; ab
+	dw Script_getfollowerdirection       ; ac
+	dw Script_followcry                  ; ad
+	dw Script_stowfollower               ; ae
+	dw Script_appearfollower             ; af
+	dw Script_appearfolloweronestep      ; b0
+	dw Script_savefollowercoords         ; b1
+	dw Script_silentstowfollower         ; b2
 	assert_table_length NUM_EVENT_COMMANDS
 
 StartScript:
@@ -802,7 +811,6 @@ GetScriptObject:
 	ret z
 	cp LAST_TALKED
 	ret z
-	dec a
 	ret
 
 Script_setlasttalked:
@@ -959,14 +967,19 @@ Script_variablesprite:
 	call GetScriptByte
 	ld e, a
 	ld d, 0
+	ld [hUsedSpriteIndex], a
 	ld hl, wVariableSprites
 	add hl, de
 	call GetScriptByte
 	ld [hl], a
+	farcall ReloadSpriteIndex
 	ret
 
 Script_appear:
 	call GetScriptByte
+	ld b, a
+Script_appear_skipinput::
+	ld a, b
 	call GetScriptObject
 	call UnmaskCopyMapObjectStruct
 	ldh a, [hMapObjectIndex]
@@ -1243,13 +1256,7 @@ Script_memcall:
 	ld d, [hl]
 	; fallthrough
 
-ScriptCall:
-; Bug: The script stack has a capacity of 5 scripts, yet there is
-; nothing to stop you from pushing a sixth script.  The high part
-; of the script address can then be overwritten by modifications
-; to wScriptDelay, causing the script to return to the rst/interrupt
-; space.
-
+ScriptCall::
 	ld hl, wScriptStackSize
 	ld a, [hl]
 	cp 5
@@ -1379,8 +1386,7 @@ StdScript:
 	ld b, a
 	inc hl
 	ld a, BANK(StdScripts)
-	call GetFarWord
-	ret
+	jp GetFarWord
 
 SkipTwoScriptBytes:
 	call GetScriptByte
@@ -1688,8 +1694,7 @@ ResetStringBuffer1:
 	ld hl, wStringBuffer1
 	ld bc, NAME_LENGTH
 	ld a, "@"
-	call ByteFill
-	ret
+	jp ByteFill
 
 Script_getstring:
 	call GetScriptByte
@@ -1986,8 +1991,7 @@ Script_clearevent:
 	call GetScriptByte
 	ld d, a
 	ld b, RESET_FLAG
-	call EventFlagAction
-	ret
+	jp EventFlagAction
 
 Script_checkevent:
 	call GetScriptByte
@@ -2010,8 +2014,7 @@ Script_setflag:
 	call GetScriptByte
 	ld d, a
 	ld b, SET_FLAG
-	call _EngineFlagAction
-	ret
+	jp _EngineFlagAction
 
 Script_clearflag:
 	call GetScriptByte
@@ -2086,8 +2089,7 @@ Script_warp:
 	ldh [hMapEntryMethod], a
 	ld a, MAPSTATUS_ENTER
 	call LoadMapStatus
-	call StopScript
-	ret
+	jp StopScript
 
 .not_ok
 	call GetScriptByte
@@ -2099,8 +2101,7 @@ Script_warp:
 	ldh [hMapEntryMethod], a
 	ld a, MAPSTATUS_ENTER
 	call LoadMapStatus
-	call StopScript
-	ret
+	jp StopScript
 
 Script_warpmod:
 	call GetScriptByte
@@ -2152,8 +2153,7 @@ Script_changemapblocks:
 	call GetScriptByte
 	ld [wMapBlocksPointer + 1], a
 	call ChangeMap
-	call BufferScreen
-	ret
+	jp BufferScreen
 
 Script_changeblock:
 	call GetScriptByte
@@ -2165,8 +2165,7 @@ Script_changeblock:
 	call GetBlockLocation
 	call GetScriptByte
 	ld [hl], a
-	call BufferScreen
-	ret
+	jp BufferScreen
 
 Script_reloadmappart::
 	xor a
@@ -2174,16 +2173,11 @@ Script_reloadmappart::
 	call OverworldTextModeSwitch
 	call GetMovementPermissions
 	farcall ReloadMapPart
-	call UpdateSprites
-	ret
+	jp UpdateSprites
 
 Script_warpcheck:
 	call WarpCheck
 	ret nc
-	farcall EnableEvents
-	ret
-
-Script_enableevents: ; unreferenced
 	farcall EnableEvents
 	ret
 
@@ -2192,34 +2186,27 @@ Script_newloadmap:
 	ldh [hMapEntryMethod], a
 	ld a, MAPSTATUS_ENTER
 	call LoadMapStatus
-	call StopScript
-	ret
+	jp StopScript
 
 Script_reloadend:
 	call Script_newloadmap
 	jp Script_end
 
 Script_opentext:
-	call OpenText
-	ret
+	jp OpenText
 
 Script_refreshscreen:
 	call RefreshScreen
-	call GetScriptByte
-	ret
+	jp GetScriptByte
 
 Script_writeunusedbyte:
 	call GetScriptByte
 	ld [wUnusedScriptByte], a
 	ret
 
-UnusedClosetextScript: ; unreferenced
-	closetext
-
 Script_closetext:
 	call _OpenAndCloseMenu_HDMATransferTilemapAndAttrmap
-	call CloseText
-	ret
+	jp CloseText
 
 Script_autoinput:
 	call GetScriptByte
@@ -2229,8 +2216,7 @@ Script_autoinput:
 	call GetScriptByte
 	ld h, a
 	pop af
-	call StartAutoInput
-	ret
+	jp StartAutoInput
 
 Script_pause:
 	call GetScriptByte
@@ -2251,10 +2237,11 @@ Script_deactivatefacing:
 	jr z, .no_time
 	ld [wScriptDelay], a
 .no_time
+; fallthrough
+DoScriptWait:
 	ld a, SCRIPT_WAIT
 	ld [wScriptMode], a
-	call StopScript
-	ret
+	jp StopScript
 
 Script_stopandsjump:
 	call StopScript
@@ -2272,8 +2259,7 @@ Script_end:
 	ld [wScriptMode], a
 	ld hl, wScriptFlags
 	res 0, [hl]
-	call StopScript
-	ret
+	jp StopScript
 
 Script_endcallback:
 	call ExitScriptSubroutine
@@ -2281,8 +2267,7 @@ Script_endcallback:
 .dummy
 	ld hl, wScriptFlags
 	res 0, [hl]
-	call StopScript
-	ret
+	jp StopScript
 
 ExitScriptSubroutine:
 ; Return carry if there's no parent to return to.
@@ -2322,8 +2307,7 @@ Script_endall:
 	ld [wScriptMode], a
 	ld hl, wScriptFlags
 	res 0, [hl]
-	call StopScript
-	ret
+	jp StopScript
 
 Script_halloffame:
 	ld hl, wGameTimerPaused
@@ -2341,8 +2325,7 @@ ReturnFromCredits:
 	call Script_endall
 	ld a, MAPSTATUS_DONE
 	call LoadMapStatus
-	call StopScript
-	ret
+	jp StopScript
 
 Script_wait:
 	push bc
@@ -2362,14 +2345,6 @@ Script_checksave:
 	ld a, c
 	ld [wScriptVar], a
 	ret
-
-Script_checkver_duplicate: ; unreferenced
-	ld a, [.gs_version]
-	ld [wScriptVar], a
-	ret
-
-.gs_version:
-	db GS_VERSION
 
 AppendTMHMMoveName::
 ; a = item ID
@@ -2396,3 +2371,41 @@ AppendTMHMMoveName::
 	inc hl
 	ld de, wStringBuffer1
 	jp CopyName2
+
+Script_freezefollower:
+	farcall _FreezeFollower
+	ret
+
+Script_unfreezefollower:
+	farcall _UnfreezeFollower
+	ret
+
+Script_getfollowerdirection:
+	farcall Script_GetFollowerDirectionFromPlayer
+	ret
+
+Script_followcry:
+	ld a, [wFollowerSpriteID]
+	jp PlayMonCry
+
+Script_stowfollower:
+	farcall _StowFollower
+	jp DoScriptWait
+
+Script_appearfollower:
+	farcall _AppearFollower
+	jp DoScriptWait
+
+Script_appearfolloweronestep:
+	farcall _AppearFollowerOneStep
+	jp DoScriptWait
+
+Script_savefollowercoords:
+	farcall _SaveFollowerCoords
+	ret
+
+Script_silentstowfollower:
+	xor a
+	ld [wScriptDelay], a
+	farcall _SilentStowFollower
+	ret

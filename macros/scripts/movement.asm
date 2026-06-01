@@ -219,4 +219,9 @@ skyfall_top: MACRO
 	db movement_skyfall_top
 ENDM
 
+	const movement_jump_in_place ; $5a
+MACRO jump_in_place
+	db movement_jump_in_place
+ENDM
+
 NUM_MOVEMENT_CMDS EQU const_value
